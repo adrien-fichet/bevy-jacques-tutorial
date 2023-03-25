@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-pub fn run() {
+pub fn _run() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugin(PeoplePlugin)
@@ -56,7 +56,7 @@ fn person_does_job(person_query: Query<(&Person, &Employed)>) {
         let job_name = match employed.job {
             Job::Doctor => "Doctor",
             Job::FireFighter => "Fire Fighter",
-            Job::Lawyer => "Lawyer",
+            Job::_Lawyer => "Lawyer",
         };
         println!("{} is a {}", person.name, job_name);
     }
@@ -87,6 +87,6 @@ struct Employed {
 #[derive(Debug)]
 enum Job {
     Doctor,
-    Lawyer,
+    _Lawyer,
     FireFighter,
 }

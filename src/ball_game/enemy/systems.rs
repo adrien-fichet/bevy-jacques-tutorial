@@ -1,3 +1,5 @@
+use std::f32::consts::TAU;
+
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use rand::prelude::*;
@@ -23,8 +25,8 @@ pub fn spawn_enemies(
 
         commands.spawn((
             SpriteBundle {
-                transform: Transform::from_xyz(random_x, random_y, 0.0),
-                texture: asset_server.load("sprites/ball_red_large.png"),
+                transform: Transform::from_xyz(random_x, random_y, 0.0).with_scale(Vec3::new(0.5, 0.5, 0.0)),
+                texture: asset_server.load("sprites/bomb.png"),
                 ..default()
             },
             Enemy {
@@ -174,13 +176,32 @@ pub fn spawn_enemy_over_time(
 
         commands.spawn((
             SpriteBundle {
-                transform: Transform::from_xyz(random_x, random_y, 0.0),
-                texture: asset_server.load("sprites/ball_red_large.png"),
+                transform: Transform::from_xyz(random_x, random_y, 0.0).with_scale(Vec3::new(0.5, 0.5, 0.0)),
+                texture: asset_server.load("sprites/bomb.png"),
                 ..default()
             },
             Enemy {
                 direction: Vec2::new(random::<f32>(), random::<f32>()).normalize(),
             },
         ));
+    }
+}
+
+pub fn despawn_enemies(
+    mut commands: Commands,
+    enemy_query: Query<Entity, With<Enemy>>,
+) {
+    for enemy_entity in enemy_query.iter() {
+        commands.entity(enemy_entity).despawn();
+    }
+}
+
+pub fn rotate_enemies(
+    mut enemy_query: Query<&mut Transform, With<Enemy>>,
+    time: Res<Time>,
+) {
+    let rotation_speed = 0.5;
+    for mut enemy_transform in enemy_query.iter_mut() {
+        enemy_transform.rotate_z(rotation_speed * TAU * time.delta_seconds());
     }
 }
