@@ -1,7 +1,7 @@
+use bevy::app::AppExit;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use rand::prelude::*;
-use bevy::app::AppExit;
 
 const PLAYER_SPEED: f32 = 500.0;
 const PLAYER_SIZE: f32 = 64.0;
@@ -17,8 +17,10 @@ pub fn run() {
     App::new()
         .add_plugins(DefaultPlugins)
         .init_resource::<Score>()
+        .init_resource::<HighScores>()
         .init_resource::<StarSpawnTimer>()
         .init_resource::<EnemySpawnTimer>()
+        .add_event::<GameOver>()
         .add_startup_system(spawn_player)
         .add_startup_system(spawn_camera)
         .add_startup_system(spawn_enemies)
@@ -30,7 +32,6 @@ pub fn run() {
         .add_system(update_enemy_direction)
         .add_system(confine_enemy_movement)
         .add_system(enemy_hit_player)
-        .add_system(enemy_hit_player)
         .add_system(player_hit_star)
         .add_system(update_score)
         .add_system(tick_star_spawn_timer)
@@ -39,6 +40,9 @@ pub fn run() {
         .add_system(tick_enemy_spawn_timer)
         //.add_system(bevy::window::close_on_esc)
         .add_system(exit_game)
+        .add_system(handle_game_over)
+        .add_system(update_high_scores)
+        .add_system(high_scores_updated)
         .run();
 }
 
@@ -64,6 +68,17 @@ impl Default for Score {
     }
 }
 
+#[derive(Resource, Debug)]
+struct HighScores {
+    pub scores: Vec<(String, u32)>,
+}
+
+impl Default for HighScores {
+    fn default() -> Self {
+        HighScores { scores: Vec::new() }
+    }
+}
+
 #[derive(Resource)]
 struct StarSpawnTimer {
     pub timer: Timer,
@@ -84,10 +99,14 @@ struct EnemySpawnTimer {
 
 impl Default for EnemySpawnTimer {
     fn default() -> Self {
-        EnemySpawnTimer { 
-            timer: Timer::from_seconds(ENEMY_SPAWN_TIME, TimerMode::Repeating) ,
+        EnemySpawnTimer {
+            timer: Timer::from_seconds(ENEMY_SPAWN_TIME, TimerMode::Repeating),
         }
     }
+}
+
+struct GameOver {
+    pub score: u32,
 }
 
 fn spawn_player(
@@ -301,10 +320,12 @@ fn confine_enemy_movement(
 
 fn enemy_hit_player(
     mut commands: Commands,
+    mut game_over_event_writer: EventWriter<GameOver>,
     mut player_query: Query<(Entity, &Transform), With<Player>>,
     enemy_query: Query<&Transform, With<Enemy>>,
     asset_server: Res<AssetServer>,
     audio: Res<Audio>,
+    score: Res<Score>,
 ) {
     if let Ok((player_entity, player_transform)) = player_query.get_single_mut() {
         for enemy_transform in enemy_query.iter() {
@@ -319,6 +340,7 @@ fn enemy_hit_player(
                 let sound_effect = asset_server.load("audio/explosionCrunch_000.ogg");
                 audio.play(sound_effect);
                 commands.entity(player_entity).despawn();
+                game_over_event_writer.send(GameOver { score: score.value });
             }
         }
     }
@@ -377,10 +399,7 @@ fn update_score(score: Res<Score>) {
     }
 }
 
-fn tick_star_spawn_timer(
-    mut star_spawn_timer: ResMut<StarSpawnTimer>,
-    time: Res<Time>,
-) {
+fn tick_star_spawn_timer(mut star_spawn_timer: ResMut<StarSpawnTimer>, time: Res<Time>) {
     star_spawn_timer.timer.tick(time.delta());
 }
 
@@ -406,10 +425,7 @@ fn spawn_stars_over_time(
     }
 }
 
-fn tick_enemy_spawn_timer(
-    mut enemy_spawn_timer: ResMut<EnemySpawnTimer>,
-    time: Res<Time>,
-) {
+fn tick_enemy_spawn_timer(mut enemy_spawn_timer: ResMut<EnemySpawnTimer>, time: Res<Time>) {
     enemy_spawn_timer.timer.tick(time.delta());
 }
 
@@ -434,14 +450,32 @@ fn spawn_enemy_over_time(
                 direction: Vec2::new(random::<f32>(), random::<f32>()).normalize(),
             },
         ));
-    }   
+    }
 }
 
-fn exit_game(
-    keyboard_input: Res<Input<KeyCode>>,
-    mut app_exit_event_writer: EventWriter<AppExit>,
-) {
+fn exit_game(keyboard_input: Res<Input<KeyCode>>, mut app_exit_event_writer: EventWriter<AppExit>) {
     if keyboard_input.just_pressed(KeyCode::Escape) {
         app_exit_event_writer.send(AppExit);
+    }
+}
+
+fn handle_game_over(mut game_over_event_reader: EventReader<GameOver>) {
+    for event in game_over_event_reader.iter() {
+        println!("Your final score is: {}", event.score.to_string());
+    }
+}
+
+fn update_high_scores(
+    mut game_over_event_reader: EventReader<GameOver>,
+    mut high_scores: ResMut<HighScores>,
+) {
+    for event in game_over_event_reader.iter() {
+        high_scores.scores.push(("Player".to_string(), event.score));
+    }
+}
+
+fn high_scores_updated(high_scores: Res<HighScores>) {
+    if high_scores.is_changed() {
+        println!("High scores: {:?})", high_scores);
     }
 }
