@@ -1,3 +1,4 @@
+### A game made with Rust and Bevy, following Jacques tutorials on Youtube
 - [Tutorial playlist](https://www.youtube.com/watch?v=TQt-v_bFdao&list=PLVnntJRoP85JHGX7rGDu6LaF3fmDDbqyd)
 
 ### ECS
