@@ -18,8 +18,8 @@ impl Plugin for EnemyPlugin {
             .add_system(enemy_movement)
             .add_system(update_enemy_direction)
             .add_system(confine_enemy_movement)
-            .add_system(enemy_hit_player)
             .add_system(tick_enemy_spawn_timer)
+            .add_system(enemy_hit_player)
             .add_system(spawn_enemy_over_time);
     }    
 }

@@ -25,6 +25,7 @@ pub fn run() {
         .add_plugin(StarPlugin)
         .add_plugin(ScorePlugin)
         //.add_system(bevy::window::close_on_esc)
+        .add_startup_system(spawn_camera)
         .add_system(exit_game)
         .add_system(handle_game_over)
         .run();
