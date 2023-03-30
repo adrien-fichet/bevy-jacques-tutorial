@@ -7,5 +7,6 @@
 - System = a function that acts on our data (fn)
 
 ### Additional resources
-- [LDtk](https://github.com/adrien-fichet/bevy_svg): 2D level editor
+- [LDtk](https://ldtk.io/): 2D level editor
 - [Kenney.nl](https://www.kenney.nl/assets): game assets
+- [CSS Flexbox reference](https://cssreference.io/flexbox/): used by bevy_ui
